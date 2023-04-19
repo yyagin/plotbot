@@ -1,0 +1,54 @@
+# See https://pre-commit.com/
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.0.1
+    hooks:
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-yaml
+      - id: check-xml
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: trailing-whitespace
+
+  - repo: https://github.com/cheshirekow/cmake-format-precommit
+    rev: v0.6.13
+    hooks:
+    - id: cmake-format
+    - id: cmake-lint
+
+  - repo: local
+    hooks:
+      - id: clang-tidy
+        name: clang-tidy
+        description: Lint files with ClangTidy.
+        entry: run-clang-tidy-10 -fix
+        language: system
+
+      - id: clang-format
+        name: clang-format
+        description: Format files with ClangFormat.
+        entry: clang-format-10
+        language: system
+        files: \.(c|cc|cxx|cpp|frag|glsl|h|hpp|hxx|ih|ispc|ipp|java|js|m|proto|vert)$
+        args: ['-fallback-style=none', '-i']
+
+      - id: catkin_lint
+        name: catkin_lint
+        description: Check package.xml and cmake files
+        entry: catkin_lint -W2 --pkg ros_template_package
+        language: system
+        always_run: true
+        pass_filenames: false
+
+      - id: catkin_test
+        name: catkin_test
+        description: Check package.xml and cmake files
+        entry: catkin
+        language: system
+        always_run: true
+        pass_filenames: false
+        args: ['test', 'ros_template_package']

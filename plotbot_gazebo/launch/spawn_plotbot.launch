@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="x" default="0" />
+  <arg name="y" default="0" />
+  <arg name="z" default="1" />
+  <arg name="yaw" default="0" />
+  <arg name="joystick" default="false" />>
+
+  <!-- Configuration of Jackal which you would like to simulate.
+       See delivers_jackal_description for details. -->
+  <!-- <arg name="config" default="base" /> -->
+
+  <node name="tf_footprint_base" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 base_link base_footprint 40" />
+
+  <include file="$(find plotbot_description)/launch/description.launch"></include>
+
+  <include file="$(find plotbot_control)/launch/control.launch" />
+
+  <!-- Spawn Robot -->
+  <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" args="-urdf -model plotbot_description -param robot_description -x $(arg x) -y $(arg y) -z $(arg z) -R 0 -P 0 -Y $(arg yaw)" />
+
+</launch>

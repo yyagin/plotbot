@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<?xml-model
+  href="http://download.ros.org/schema/package_format2.xsd"
+  schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="2">
+  <name>plotbot</name>
+  <version>1.0.0</version>
+  <description>Plotter Bot.</description>
+  <maintainer email="yasinyagin@gmail.com">Yasin Yagin</maintainer>
+  <license>BSD</license>
+
+  <author>Yasin Yagin</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <exec_depend>robot</exec_depend>
+
+  <exec_depend>gazebo_ros_pkgs</exec_depend>
+  <exec_depend>rqt_common_plugins</exec_depend>
+  <exec_depend>rqt_robot_plugins</exec_depend>
+  <exec_depend>plotbot_control</exec_depend>
+  <exec_depend>plotbot_description</exec_depend>
+
+  <export>
+    <metapackage/>
+  </export>
+</package>

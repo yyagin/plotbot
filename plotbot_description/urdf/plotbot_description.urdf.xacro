@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.5.1-0-g916b5db  Build Version: 1.5.7152.31018
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot name="plotbot_description" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:property name="wheel_radius" value="0.04" />
+  <xacro:property name="wheel_width" value="0.01" />
+
+  <link name="base_link"></link>
+
+  <link name="chassis_link">
+    <inertial>
+      <origin xyz="0.1 0.0 0.0" rpy="0 0 0" />
+      <mass value="0.558" />
+      <inertia ixx="0.0084248" ixy="5.506E-06" ixz="1.2713E-05" iyy="0.018919" iyz="-3.5071E-05" izz="0.012914" />
+    </inertial>
+    <visual>
+      <origin xyz="0.0 0.0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://plotbot_description/meshes/base_link.dae" />
+      </geometry>
+      <material name="">
+        <color rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="0.25" length="0.01" />
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="right_wheel">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+      <mass value="0.034097" />
+      <inertia ixx="3.3416E-05" ixy="-1.0543E-10" ixz="1.8488E-11" iyy="1.6974E-05" iyz="-6.6392E-10" izz="1.6941E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0.0 0.0 0.0" rpy="0  1.5708 0" />
+      <geometry>
+        <cylinder radius="0.04" length="0.01" />
+      </geometry>
+      <material name="">
+        <color rgba="0.52941 0.54902 0.54902 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.0" rpy="0  1.5708 0" />
+      <geometry>
+        <cylinder radius="0.04" length="0.01" />
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="left_wheel">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0 " />
+      <mass value="0.034097" />
+      <inertia ixx="1.6941E-05" ixy="-6.6392E-10" ixz="1.8488E-11" iyy="1.6974E-05" iyz="-1.0543E-10" izz="3.3416E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 1.5708  0 " />
+      <geometry>
+        <cylinder radius="0.04" length="0.01" />
+      </geometry>
+      <material name="">
+        <color rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0  1.5708 0.0 " />
+      <geometry>
+        <cylinder radius="0.04" length="0.01" />
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="caster_front_link">
+    <visual>
+      <origin rpy="1.57079632679 0 0" xyz="0 0.02 0"/>
+      <geometry>
+        <sphere radius="0.01"/>
+      </geometry>
+      <material name=""/>
+    </visual>
+    <collision>
+      <geometry>
+        <sphere radius="0.01"/>
+      </geometry>
+      <origin rpy="1.57079632679 0 0" xyz="0 0.02 0"/>
+    </collision>
+    <inertial>
+      <mass value="0.2"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+    </inertial>
+  </link>
+
+  <joint name="base_link_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="chassis_link" />
+  </joint>
+
+  <joint name="left_wheel_joint" type="continuous">
+    <origin xyz="0.0 0.18 0.012" rpy="1.5708 0 1.5708" />
+    <parent link="base_link" />
+    <child link="left_wheel" />
+    <axis xyz="1 0 0" />
+    <limit effort="1000" velocity="100" />
+  </joint>
+
+  <joint name="right_wheel_joint" type="continuous">
+    <origin xyz="0.0 -0.18 0.012" rpy="1.5708 0 1.5708" />
+    <parent link="base_link" />
+    <child link="right_wheel" />
+    <axis xyz="1 0 0" />
+    <limit effort="1000" velocity="100" />
+  </joint>
+
+  <joint name="caster_front_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="caster_front_link"/>
+    <origin rpy="-1.57079632679 0 0" xyz="0.16 0.0 0.0"/>
+  </joint>
+
+  <transmission name="left_wheel_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="left_wheel_joint">
+      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="left_actuator">
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="right_wheel_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="right_wheel_joint">
+      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="right_actuator">
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <gazebo reference="right_wheel">
+    <mu1 value="1.0"/>
+    <mu2 value="1.0"/>
+    <kp value="10000000.0"/>
+    <kd value="1.0"/>
+    <fdir1 value="1 0 0"/>
+    <material>Gazebo/Grey</material>
+    <turnGravityOff>false</turnGravityOff>
+  </gazebo>
+
+  <gazebo reference="left_wheel">
+    <mu1 value="1.0"/>
+    <mu2 value="1.0"/>
+    <kp value="10000000.0"/>
+    <kd value="1.0"/>
+    <fdir1 value="1 0 0"/>
+    <material>Gazebo/Grey</material>
+    <turnGravityOff>false</turnGravityOff>
+  </gazebo>
+
+  <gazebo reference="caster_front_link">
+    <mu1 value="0.0"/>
+    <mu2 value="0.0"/>
+    <kp value="10000000.0"/>
+    <kd value="1.0"/>
+    <fdir1 value="1 0 0"/>
+    <material>Gazebo/Grey</material>
+    <turnGravityOff>false</turnGravityOff>
+  </gazebo>
+
+  <gazebo reference="base_link">
+    <material>Gazebo/White</material>
+    <turnGravityOff>false</turnGravityOff>
+  </gazebo>
+
+  <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>/</robotNamespace>
+    </plugin>
+  </gazebo>
+</robot>
