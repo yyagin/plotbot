@@ -1,0 +1,7 @@
+<library path="lib/libplotbot_hw_interface">
+  <class name="plotbot_hw_interface/PlotBotHwInterface" type="plotbot_hw_interface::PlotBotHwInterface" base_class_type="hardware_interface::RobotHW">
+    <description>
+        plugin of PlotBot hardware interface
+    </description>
+  </class>
+</library>
