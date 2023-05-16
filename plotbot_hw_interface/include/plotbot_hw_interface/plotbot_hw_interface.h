@@ -18,6 +18,7 @@
 #define PLOTBOT_HW_INTERFACE_PLOTBOT_HW_INTERFACE_H
 
 #include <signal.h>
+
 #include <cmath>
 #include <map>
 #include <memory>
@@ -25,7 +26,6 @@
 #include <vector>
 
 #include "controller_manager/controller_manager.h"
-#include "plotbot_hw_interface/exponential_moving_average.h"
 #include "hardware_interface/hardware_interface.h"
 #include "hardware_interface/joint_command_interface.h"
 #include "hardware_interface/joint_state_interface.h"
@@ -34,11 +34,11 @@
 #include "joint_limits_interface/joint_limits_interface.h"
 #include "joint_limits_interface/joint_limits_rosparam.h"
 #include "joint_limits_interface/joint_limits_urdf.h"
-#include "ros/subscriber.h"
-#include "sensor_msgs/JointState.h"
+#include "plotbot_hw_interface/exponential_moving_average.h"
 #include "pluginlib/class_list_macros.hpp"
 #include "ros/ros.h"
-
+#include "ros/subscriber.h"
+#include "sensor_msgs/JointState.h"
 #include "urdf_parser/urdf_parser.h"
 
 namespace plotbot_hw_interface
@@ -47,7 +47,9 @@ static const std::vector<std::string> JOINT_NAMES{ "left_wheel_joint", "right_wh
 
 typedef struct Motor
 {
-  Motor() : command{ 0.0 }, position{ 0.0 }, velocity{ 0.0 }, effort{ 0.0 }, lpf(0.684) {}
+  Motor() : command{ 0.0 }, position{ 0.0 }, velocity{ 0.0 }, effort{ 0.0 }, lpf(0.684)
+  {
+  }
   ExpMovingAverage<double> lpf;
   std::string joint_name;
   double command;
@@ -58,12 +60,11 @@ typedef struct Motor
 
 class PlotbotHardwareInterface : public hardware_interface::RobotHW
 {
-
 public:
   PlotbotHardwareInterface();
   PlotbotHardwareInterface(const PlotbotHardwareInterface&) = default;
   PlotbotHardwareInterface& operator=(const PlotbotHardwareInterface&) = default;
-  
+
   std::vector<Motor> motors;
   bool init(ros::NodeHandle& /*unused*/, ros::NodeHandle& /*unused*/) override;
   void read(const ros::Time& /*unused*/, const ros::Duration& /*unused*/) override;
@@ -72,15 +73,14 @@ public:
   ros::Duration getPeriod() const;
 
 private:
-
-  void stateCallback(const sensor_msgs::JointState &msg);
+  void stateCallback(const sensor_msgs::JointState& msg);
 
   ros::Time pre_time_;
   ros::Time tp_;
 
   ros::Publisher motor_cmd_pub_;
   ros::Subscriber motor_state_sub_;
-
+  double alpha_;
   bool emergencyBrakeFlag = false;
   bool emergencyButtonFlag = false;
   ros::Time bttn_timestamp = ros::Time::now();
@@ -89,7 +89,8 @@ private:
   double torque_const;  // physical params.
   double motor_pole_pair;
   double odometry_fix_multiplier = 7.6;
-  double alpha_;
+  sensor_msgs::JointState state_msg_;
+  sensor_msgs::JointState command_msg_;
 
   hardware_interface::JointStateInterface joint_state_interface;
   hardware_interface::PositionJointInterface joint_position_interface;

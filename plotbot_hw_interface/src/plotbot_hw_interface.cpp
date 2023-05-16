@@ -38,9 +38,17 @@ PlotbotHardwareInterface::PlotbotHardwareInterface()
 
 bool PlotbotHardwareInterface::init(ros::NodeHandle& nh_root, ros::NodeHandle& nh)
 {
-  std::map<std::string, int> motors{};
+  std::vector<Motor> motors{};
   nh.param<double>("low_pass_filter_alpha", alpha_, 0.684);
-
+  Motor left_motor{};
+  Motor right_motor{};
+  left_motor.joint_name = JOINT_NAMES.at(0);
+  for (auto& joint : JOINT_NAMES)
+    {
+      Motor motor{};
+      motor.joint_name = joint;
+      motors.push_back(motor);
+    }
   motor_cmd_pub_ = nh.advertise<sensor_msgs::JointState>("/motor/commands", 1);
   motor_state_sub_ = nh.subscribe("/motor/states", 1, &PlotbotHardwareInterface::stateCallback, this);
   // loads joint limits
@@ -56,14 +64,12 @@ bool PlotbotHardwareInterface::init(ros::NodeHandle& nh_root, ros::NodeHandle& n
 
       if (getJointLimits(urdf_joint, joint_limits))
         {
-          hw_interface_logger_.info("Joint limits are loaded");
+          ROS_INFO_STREAM("Joint limits are loaded");
         }
     }
 
   // reads system parameters
   nh.param<double>("gear_ratio", gear_ratio, 1.0);
-  nh.param<double>("torque_const", torque_const, 1.0);
-  nh.param<double>("motor_pole_pair", motor_pole_pair, 1.0);
   nh.param<double>("odometry_fix_multiplier", odometry_fix_multiplier, 1.0);
 
   ROS_INFO_STREAM("PARAMETERS: ");
@@ -72,7 +78,7 @@ bool PlotbotHardwareInterface::init(ros::NodeHandle& nh_root, ros::NodeHandle& n
   ROS_INFO_STREAM("- Odometry Fix Multiplier :" << odometry_fix_multiplier);
   {
     size_t i{ 0 };
-    for (auto& m : vesc_motors)
+    for (auto& m : motors)
       {
         hardware_interface::JointStateHandle state_handle(m.joint_name, &m.position, &m.velocity, &m.effort);
         joint_state_interface.registerHandle(state_handle);
@@ -80,16 +86,15 @@ bool PlotbotHardwareInterface::init(ros::NodeHandle& nh_root, ros::NodeHandle& n
       }
 
     registerInterface(&joint_state_interface);
-    ros::Duration(1).sleep();
-    for (auto& m : vesc_motors)
+    ros::Duration(0.5).sleep();
+    for (auto& m : motors)
       {
         hardware_interface::JointHandle velocity_handle(joint_state_interface.getHandle(m.joint_name), &m.command);
         joint_velocity_interface.registerHandle(velocity_handle);
       }
-    // registers a state handle and its interface
     registerInterface(&joint_velocity_interface);
   }
-  hw_interface_logger_.info("Hardware Interface Initialized");
+  ROS_INFO_STREAM("Hardware Interface Initialized");
   return true;
 }
 
@@ -97,67 +102,39 @@ void PlotbotHardwareInterface::read(const ros::Time& time, const ros::Duration& 
 {
   auto dt = static_cast<double>((getTime() - pre_time_).nsec) / 1e9;
   pre_time_ = getTime();
-  try
+  for (size_t i = 0; i < motors.size(); ++i)
     {
-      size_t i{ 0 };
-      for (auto& m : vesc_motors)
+      auto& m = motors.at(i);
+      if (m.joint_name == state_msg_.name.at(i))
         {
-          auto erpm = m.ptr->getRPM();
-          if (erpm > max_erpm_)
-            erpm = max_erpm_;
-          if (erpm < -1 * max_erpm_)
-            erpm = -1 * max_erpm_;
-
-          m.velocity = (m.lpf(erpm) / motor_pole_pair) / 60.0 * 2.0 * M_PI / gear_ratio;
-          m.position += m.velocity * dt;
-          i++;
+          m.velocity = m.lpf(state_msg_.velocity.at(i));
+          m.position = state_msg_.position.at(i);
+          m.effort = state_msg_.effort.at(i);
         }
-    }
-  catch (const std::exception& e)
-    {
-      hw_interface_logger_.error("Exception while reading: ");
-      hw_interface_logger_.error(e.what());
+      else
+        {
+          ROS_WARN_STREAM("Motor/Joint names not matching!");
+        }
     }
 }
 
 void PlotbotHardwareInterface::write(const ros::Time& time, const ros::Duration& period)
 {
   limit_velocity_interface.enforceLimits(getPeriod());
-  // converts the velocity unit: rad/s or m/s -> rpm
-  // Motor pole pair added to calculate ERPM, VESC's speed controller input
-  // must be "ERPM"
   try
     {
-      hardware_msgs::MotorCmd cmd;
-      double ref_velocity_rpm{};
-      size_t i{};
-      for (auto& m : vesc_motors)
+      sensor_msgs::JointState cmd;
+      for (size_t i = 0; i < motors.size(); ++i)
         {
-          // ROS_INFO_STREAM(" ID First" << id.first <<"  VESC IDs: " << id.second);
-          ref_velocity_rpm = m.command * 60.0 / 2.0 / M_PI * gear_ratio;
-          if (!emergencyBrakeFlag)
-            {
-              m.ptr->setRPM(ref_velocity_rpm * motor_pole_pair);
-            }
-          else
-            {
-              m.ptr->setDuty(0);
-            }
+          auto& m = motors.at(i);
+          cmd.velocity.at(i) = m.velocity;
         }
-      cmd.motor1_cmd = ref_velocity_rpm * motor_pole_pair;
-      cmd.motor2_cmd = ref_velocity_rpm * motor_pole_pair;
-      cmd.motor3_cmd = ref_velocity_rpm * motor_pole_pair;
-      cmd.motor4_cmd = ref_velocity_rpm * motor_pole_pair;
-      cmd.emergency_brake = emergencyBrakeFlag;
       motor_cmd_pub_.publish(cmd);
-      std_msgs::Int8 emergency_msg{};
-      emergency_msg.data = static_cast<int8_t>(emergencyBrakeFlag);
-      emergency_brake_pub_.publish(emergency_msg);
     }
   catch (const std::exception& e)
     {
-      hw_interface_logger_.error("Exception while writing: ");
-      hw_interface_logger_.error(e.what());
+      ROS_ERROR_STREAM("Exception while writing: ");
+      ROS_ERROR_STREAM(e.what());
     }
 }
 
@@ -171,24 +148,9 @@ ros::Duration PlotbotHardwareInterface::getPeriod() const
   return ros::Duration(0.02);
 }
 
-bool PlotbotHardwareInterface::motorEmergencyCallback(hardware_msgs::EmergencyBrake::Request& req,
-                                                      hardware_msgs::EmergencyBrake::Response& res)
+void PlotbotHardwareInterface::stateCallback(const sensor_msgs::JointState& msg)
 {
-  emergencyBrakeFlag = req.request;
-  return true;
-}
-
-void PlotbotHardwareInterface::bttnEmergencyCallBack(const sensor_msgs::Joy::ConstPtr& data)
-{
-  if (data->buttons[1] == 1 && !emergencyButtonFlag)
-    {
-      emergencyBrakeFlag = !emergencyBrakeFlag;
-      emergencyButtonFlag = true;
-    }
-  else if (data->buttons[1] == 0 && emergencyButtonFlag)
-    {
-      emergencyButtonFlag = false;
-    }
+  state_msg_ = msg;
 }
 
 }  // namespace plotbot_hw_interface
