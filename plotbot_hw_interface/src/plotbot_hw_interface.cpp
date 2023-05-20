@@ -26,6 +26,7 @@
 #include <utility>
 #include <vector>
 
+#include "hardware_interface/joint_command_interface.h"
 #include "ros/ros.h"
 #include "sensor_msgs/Joy.h"
 #include "std_msgs/Int8.h"
@@ -38,16 +39,14 @@ PlotbotHardwareInterface::PlotbotHardwareInterface()
 
 bool PlotbotHardwareInterface::init(ros::NodeHandle& nh_root, ros::NodeHandle& nh)
 {
-  std::vector<Motor> motors{};
   nh.param<double>("low_pass_filter_alpha", alpha_, 0.684);
   Motor left_motor{};
   Motor right_motor{};
-  left_motor.joint_name = JOINT_NAMES.at(0);
   for (auto& joint : JOINT_NAMES)
     {
       Motor motor{};
       motor.joint_name = joint;
-      motors.push_back(motor);
+      motors_.push_back(motor);
     }
   motor_cmd_pub_ = nh.advertise<sensor_msgs::JointState>("/motor/commands", 1);
   motor_state_sub_ = nh.subscribe("/motor/states", 1, &PlotbotHardwareInterface::stateCallback, this);
@@ -60,7 +59,7 @@ bool PlotbotHardwareInterface::init(ros::NodeHandle& nh_root, ros::NodeHandle& n
   if (nh.getParam(robot_description_name, robot_description))
     {
       const urdf::ModelInterfaceSharedPtr urdf = urdf::parseURDF(robot_description);
-      const urdf::JointConstSharedPtr urdf_joint = urdf->getJoint(motors.at(0).joint_name);
+      const urdf::JointConstSharedPtr urdf_joint = urdf->getJoint(motors_.at(0).joint_name);
 
       if (getJointLimits(urdf_joint, joint_limits))
         {
@@ -69,16 +68,15 @@ bool PlotbotHardwareInterface::init(ros::NodeHandle& nh_root, ros::NodeHandle& n
     }
 
   // reads system parameters
-  nh.param<double>("gear_ratio", gear_ratio, 1.0);
+  nh.param<double>("gear_ratio", gear_ratio, 131.25);
   nh.param<double>("odometry_fix_multiplier", odometry_fix_multiplier, 1.0);
 
   ROS_INFO_STREAM("PARAMETERS: ");
   ROS_INFO_STREAM("- Gear Ratio :" << gear_ratio);
-  ROS_INFO_STREAM("- Motor Pole Pair :" << motor_pole_pair);
   ROS_INFO_STREAM("- Odometry Fix Multiplier :" << odometry_fix_multiplier);
   {
     size_t i{ 0 };
-    for (auto& m : motors)
+    for (auto& m : motors_)
       {
         hardware_interface::JointStateHandle state_handle(m.joint_name, &m.position, &m.velocity, &m.effort);
         joint_state_interface.registerHandle(state_handle);
@@ -86,10 +84,13 @@ bool PlotbotHardwareInterface::init(ros::NodeHandle& nh_root, ros::NodeHandle& n
       }
 
     registerInterface(&joint_state_interface);
+
     ros::Duration(0.5).sleep();
-    for (auto& m : motors)
+    for (auto& m : motors_)
       {
+        
         hardware_interface::JointHandle velocity_handle(joint_state_interface.getHandle(m.joint_name), &m.command);
+        hardware_interface::EffortJointInterface effort_handle{};
         joint_velocity_interface.registerHandle(velocity_handle);
       }
     registerInterface(&joint_velocity_interface);
@@ -100,21 +101,29 @@ bool PlotbotHardwareInterface::init(ros::NodeHandle& nh_root, ros::NodeHandle& n
 
 void PlotbotHardwareInterface::read(const ros::Time& time, const ros::Duration& period)
 {
-  auto dt = static_cast<double>((getTime() - pre_time_).nsec) / 1e9;
-  pre_time_ = getTime();
-  for (size_t i = 0; i < motors.size(); ++i)
+  try
     {
-      auto& m = motors.at(i);
-      if (m.joint_name == state_msg_.name.at(i))
+      for (size_t i = 0; i < motors_.size(); ++i)
         {
-          m.velocity = m.lpf(state_msg_.velocity.at(i));
-          m.position = state_msg_.position.at(i);
-          m.effort = state_msg_.effort.at(i);
+          if (!state_msg_.name.empty())
+            {
+              auto& m = motors_.at(i);
+              if (m.joint_name == state_msg_.name.at(i))
+                {
+                  m.velocity = m.lpf(state_msg_.velocity.at(i));
+                  m.position = state_msg_.position.at(i);
+                }
+              else
+                {
+                  ROS_WARN_STREAM("Motor/Joint names not matching!");
+                }
+            }
         }
-      else
-        {
-          ROS_WARN_STREAM("Motor/Joint names not matching!");
-        }
+    }
+  catch (const std::exception& e)
+    {
+      ROS_ERROR_STREAM("Exception while reading: ");
+      ROS_ERROR_STREAM(e.what());
     }
 }
 
@@ -124,10 +133,10 @@ void PlotbotHardwareInterface::write(const ros::Time& time, const ros::Duration&
   try
     {
       sensor_msgs::JointState cmd;
-      for (size_t i = 0; i < motors.size(); ++i)
+      for (auto& m : motors_)
         {
-          auto& m = motors.at(i);
-          cmd.velocity.at(i) = m.velocity;
+          cmd.velocity.push_back((m.command * 60.0  / (2 * M_PI)));
+          cmd.name.push_back(m.joint_name);
         }
       motor_cmd_pub_.publish(cmd);
     }

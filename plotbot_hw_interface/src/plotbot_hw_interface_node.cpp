@@ -22,38 +22,29 @@
 
 int main(int argc, char** argv)
 {
-//   ros::init(argc, argv, "plotbot_hardware_interface_node");
-//   ros::NodeHandle nh, nh_private("~");
-//   deliverbot_hw_interface::DeliverbotHwInterface deliverbot_hw_interface;
-//   deliverbot_hw_interface_rosserial::DeliverbotHwInterface deliverbot_hw_interface_rosserial;
-//   std::unique_ptr<controller_manager::ControllerManager> controller_manager;
-//   ros::Timer timer;
+  ros::init(argc, argv, "plotbot_hardware_interface_node");
+  ros::NodeHandle nh, nh_private("~");
+  plotbot_hw_interface::PlotbotHardwareInterface plotbot_hw_interface;
+  std::unique_ptr<controller_manager::ControllerManager> controller_manager;
+  ros::Timer timer;
 
-//   if (findCAN())
-//     {
-//       deliverbot_hw_interface.init(nh, nh_private);
-//       controller_manager = std::make_unique<controller_manager::ControllerManager>(&deliverbot_hw_interface, nh);
-//       timer = nh.createTimer(deliverbot_hw_interface.getPeriod(), [&](const ros::TimerEvent& /*event*/) {
-//         // sends commands
-//         deliverbot_hw_interface.write(deliverbot_hw_interface.getTime(), deliverbot_hw_interface.getPeriod());
+  plotbot_hw_interface.init(nh, nh_private);
+  controller_manager = std::make_unique<controller_manager::ControllerManager>(&plotbot_hw_interface, nh);
+  timer = nh.createTimer(plotbot_hw_interface.getPeriod(), [&](const ros::TimerEvent& /*event*/) {
+    // sends commands
+    plotbot_hw_interface.write(plotbot_hw_interface.getTime(), plotbot_hw_interface.getPeriod());
 
-//         // updates the hardware interface control
-//         controller_manager->update(deliverbot_hw_interface.getTime(), deliverbot_hw_interface.getPeriod());
+    // updates the hardware interface control
+    controller_manager->update(plotbot_hw_interface.getTime(), plotbot_hw_interface.getPeriod());
 
-//         // gets current states
-//         deliverbot_hw_interface.read(deliverbot_hw_interface.getTime(), deliverbot_hw_interface.getPeriod());
-//       });
-//     }
-//   else
-//     {
-//       node_logger.critical("CAN interface can not found!");
-//     }
+    // gets current states
+    plotbot_hw_interface.read(plotbot_hw_interface.getTime(), plotbot_hw_interface.getPeriod());
+  });
 
-//   ros::AsyncSpinner spinner(2);
-
-//   spinner.start();
-//   ros::waitForShutdown();
-//   // spinner.stop();
+  ros::AsyncSpinner spinner(2);
+  spinner.start();
+  ros::waitForShutdown();
+  spinner.stop();
 
   return EXIT_SUCCESS;
 }

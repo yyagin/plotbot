@@ -1,0 +1,12 @@
+cmake_minimum_required(VERSION 3.0.2)
+project(plotbot_base)
+
+find_package(catkin REQUIRED COMPONENTS roslaunch)
+
+catkin_package()
+
+roslaunch_add_file_check(launch/base.launch)
+
+install(DIRECTORY config launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)

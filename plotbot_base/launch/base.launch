@@ -1,0 +1,11 @@
+<launch>
+    <include file="$(find plotbot_description)/launch/description.launch"/>
+
+	<include file="$(find plotbot_control)/launch/control.launch" />
+
+    <!-- Teleoperation via joystick and rviz interactive markers -->
+	<!-- <include file="$(find plotbot_control)/launch/teleop.launch" ns="joy_teleop" /> -->
+
+    <node pkg="plotbot_hw_interface" type="plotbot_hw_interface_node" name="plotbot_hw_interface_node" output="screen" required="true" clear_params="true">
+    </node>
+</launch>

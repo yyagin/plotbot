@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<?xml-model
+  href="http://download.ros.org/schema/package_format2.xsd"
+  schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="2">
+  <name>plotbot_base</name>
+  <version>1.0.0</version>
+  <description>Plotter Bot.</description>
+  <maintainer email="yasinyagin@gmail.com">Yasin Yagin</maintainer>
+  <license>BSD</license>
+
+  <author>Yasin Yagin</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <exec_depend>robot</exec_depend>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roslaunch</build_depend>
+  <depend>controller_manager</depend>
+  <depend>interactive_marker_twist_server</depend>
+  <depend>diff_drive_controller</depend>
+  <depend>joint_state_controller</depend>
+  <depend>joy</depend>
+  <depend>robot_localization</depend>
+  <depend>teleop_twist_joy</depend>
+  <depend>topic_tools</depend>
+  <depend>twist_mux</depend>
+  <depend>hardware_interface</depend>
+  <depend>sensor_msgs</depend>
+  <depend>joint_limits_interface</depend>
+  <depend>pluginlib</depend>
+  <depend>urdf</depend>
+
+
+</package>

@@ -65,7 +65,6 @@ public:
   PlotbotHardwareInterface(const PlotbotHardwareInterface&) = default;
   PlotbotHardwareInterface& operator=(const PlotbotHardwareInterface&) = default;
 
-  std::vector<Motor> motors;
   bool init(ros::NodeHandle& /*unused*/, ros::NodeHandle& /*unused*/) override;
   void read(const ros::Time& /*unused*/, const ros::Duration& /*unused*/) override;
   void write(const ros::Time& /*unused*/, const ros::Duration& /*unused*/) override;
@@ -77,6 +76,7 @@ private:
 
   ros::Time pre_time_;
   ros::Time tp_;
+  std::vector<Motor> motors_;
 
   ros::Publisher motor_cmd_pub_;
   ros::Subscriber motor_state_sub_;
