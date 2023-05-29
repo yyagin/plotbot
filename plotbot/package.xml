@@ -20,6 +20,10 @@
   <exec_depend>rqt_robot_plugins</exec_depend>
   <exec_depend>plotbot_control</exec_depend>
   <exec_depend>plotbot_description</exec_depend>
+  <exec_depend>plotbot_hw_interface</exec_depend>
+  <exec_depend>plotbot_base</exec_depend>
+  <exec_depend>ros_imu_bno055</exec_depend>
+  <exec_depend>plotbot_gazebo</exec_depend>
 
   <export>
     <metapackage/>

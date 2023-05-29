@@ -1,0 +1,16 @@
+<launch>
+
+    <node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_imu_link_broadcaster" args="0.0 0.0 0.0 0.000 0.000 0.000 base_link imu_link" />
+
+    <node pkg="ros_imu_bno055" type="imu_ros.py" name="ros_imu_bno055_node" output="screen" launch-prefix="bash -c 'sleep 1.0; $0 $@'">
+        <param name="serial_port" value="/dev/ttyUSB0" />
+        <param name="frame_id" value="imu_link" />
+        <param name="operation_mode" value="IMU" />
+        <param name="oscillator" value="INTERNAL" />
+        <param name="reset_orientation" value = "true" />
+        <param name="frequency" value="50" />
+        <param name="use_magnetometer" value="false" />
+        <param name="use_temperature" value="false" />
+    </node>
+
+</launch>

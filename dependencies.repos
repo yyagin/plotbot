@@ -1,0 +1,10 @@
+repositories:
+  bno055_driver:
+    type: git
+    url: "https://github.com/RoboticArts/ros_imu_bno055.git"
+    version: master
+  kinect2:
+    type: git
+    url: "https://github.com/yyagin/iai_kinect2.git"
+    version: master
+
