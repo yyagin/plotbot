@@ -1,0 +1,107 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Robot Parameters
+L = 0.5  # Wheelbase length (distance between the two wheels)
+
+# PID Parameters
+Kp_steer = 1.0  # Proportional gain for steering control
+Ki_steer = 0.1  # Integral gain for steering control
+Kd_steer = 0.1  # Derivative gain for steering control
+
+Kp_speed = 0.5  # Proportional gain for speed control
+Ki_speed = 0.1  # Integral gain for speed control
+Kd_speed = 0.1  # Derivative gain for speed control
+
+# Square Path Parameters
+side_length = 2.0  # Length of each side of the square
+speed_ref = 1.0  # Reference speed
+
+# Robot State
+x0 = 0.0
+y0 = 0.0
+theta0 = 0.0
+v0 = 0.0
+
+# PID Controller
+def pid_control(error, prev_error, integral, Kp, Ki, Kd):
+    proportional = Kp * error
+    integral += error
+    derivative = Kd * (error - prev_error)
+    
+    control = proportional + Ki * integral + derivative
+    return control, integral
+
+# Predefined Square Path
+path_x = [0.0, side_length, side_length, 0.0, 0.0]
+path_y = [0.0, 0.0, side_length, side_length, 0.0]
+
+# Path Following Simulation
+T = 16.0  # Simulation time
+dt = 0.1  # Time step
+n_steps = int(T / dt)
+
+x_hist = np.zeros(n_steps)
+y_hist = np.zeros(n_steps)
+theta_hist = np.zeros(n_steps)
+v_hist = np.zeros(n_steps)
+
+x_hist[0] = x0
+y_hist[0] = y0
+theta_hist[0] = theta0
+v_hist[0] = v0
+
+steer_integral = 0.0
+speed_integral = 0.0
+
+current_segment = 0  # Current segment of the square path
+
+for i in range(1, n_steps):
+    x = x_hist[i-1]
+    y = y_hist[i-1]
+    theta = theta_hist[i-1]
+    v = v_hist[i-1]
+    
+    # Calculate path error
+    x_error = path_x[current_segment + 1] - x
+    y_error = path_y[current_segment + 1] - y
+    theta_ref = np.arctan2(y_error, x_error)
+    theta_error = theta_ref - theta
+    
+    # Calculate speed error
+    speed_error = speed_ref - v
+    
+    # Calculate steering control signal
+    steer_control, steer_integral = pid_control(theta_error, 0.0, steer_integral, Kp_steer, Ki_steer, Kd_steer)
+    
+    # Calculate speed control signal
+    speed_control, speed_integral = pid_control(speed_error, 0.0, speed_integral, Kp_speed, Ki_speed, Kd_speed)
+    
+    # Update robot state
+    omega = 2 * speed_control / L
+    x_dot = v * np.cos(theta)
+    y_dot = v * np.sin(theta)
+    theta_dot = omega
+    v_dot = speed_control
+    
+    x_hist[i] = x + x_dot * dt
+    y_hist[i] = y + y_dot * dt
+    theta_hist[i] = theta + theta_dot * dt
+    v_hist[i] = v + v_dot * dt
+    
+    # Check if the robot has reached the end of the current segment
+    if np.abs(x_error) < 0.1 and np.abs(y_error) < 0.1:
+        current_segment += 1
+        if current_segment == 4:
+            current_segment = 0
+
+# Plotting Results
+plt.figure(figsize=(10, 6))
+plt.plot(path_x, path_y, 'r--', label='Reference Path')
+plt.plot(x_hist, y_hist, 'b', label='Robot Path')
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.legend()
+plt.grid(True)
+plt.axis('equal')
+plt.show()
