@@ -11,6 +11,9 @@ plotbot_velocity_controller:
   twist_covariance_diagonal: [0.001, 0.001, 0.001, 1000000.0, 1000000.0, 0.03]
   cmd_vel_timeout: 0.25
 
+  wheel_separation : 0.36
+  wheel_radius : 0.04
+
   k_l: 0.1
   k_r: 0.1
 
@@ -19,7 +22,7 @@ plotbot_velocity_controller:
   enable_odom_tf: false
 
   # Wheel separation and radius multipliers
-  wheel_separation_multiplier: 1.5 # default: 1.0
+  wheel_separation_multiplier: 1.0 # default: 1.0
   wheel_radius_multiplier    : 1.0 # default: 1.0
 
   # Velocity and acceleration limits
@@ -33,7 +36,8 @@ plotbot_velocity_controller:
   angular:
     z:
       has_velocity_limits    : true
-      max_velocity           : 1.0   # rad/s
+      max_velocity           : 2.0   # rad/s
       has_acceleration_limits: true
       max_acceleration       : 10.0   # rad/s^2
 
+  

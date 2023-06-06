@@ -50,7 +50,7 @@ bool PlotbotHardwareInterface::init(ros::NodeHandle& nh_root, ros::NodeHandle& n
     }
   motor_cmd_pub_ = nh.advertise<sensor_msgs::JointState>("/motor/commands", 1);
   motor_state_sub_ = nh.subscribe("/motor/states", 1, &PlotbotHardwareInterface::stateCallback, this);
-  // loads joint limits
+  // loads joint limits 
 
   std::string robot_description_name, robot_description;
   nh.param<std::string>("robot_description_name", robot_description_name, "/robot_description");
@@ -135,7 +135,7 @@ void PlotbotHardwareInterface::write(const ros::Time& time, const ros::Duration&
       sensor_msgs::JointState cmd;
       for (auto& m : motors_)
         {
-          cmd.velocity.push_back((m.command * 60.0  / (2 * M_PI)));
+          cmd.velocity.push_back((m.command));
           cmd.name.push_back(m.joint_name);
         }
       motor_cmd_pub_.publish(cmd);
